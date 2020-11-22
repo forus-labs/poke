@@ -10,11 +10,10 @@ interface ExtendedSocket extends Socket {
 const CONNECTION = 'connection';
 const DISCONNECT = 'disconnect';
 const UPDATE = 'update';
-const CONNECT_ERROR = 'connect_error';
 
 const http = createServer();
 const io = new Server(http);
-const redisAdapter: RedisAdapter = createAdapter(process.env.REDIS_URL, {key: process.env.REDIS_KEY});
+const redisAdapter: RedisAdapter = createAdapter(process.env.REDIS_URL, { key: process.env.REDIS_KEY });
 
 admin.initializeApp({
     credential: admin.credential.cert({
@@ -26,8 +25,8 @@ admin.initializeApp({
 
 io.adapter(redisAdapter);
 io.use((socket: ExtendedSocket, next) => {
-    const token: string = socket.handshake.headers['token_id'];
-    const err = Error('Authentication Failed');
+    const token = socket.handshake.query['token'];
+    const err = new Error('Authentication Failed');
     if (token) {
         admin.auth().verifyIdToken(token)
             .then((decodedToken) => {
@@ -36,38 +35,27 @@ io.use((socket: ExtendedSocket, next) => {
                 next();
             }).catch((FirebaseError: admin.FirebaseError) => {
                 err.message += ` - User ID could not be verified: ${FirebaseError}`;
+                console.log(err.message);
+                next(err);
             });
+    } else {
+        err.message += ' - InvalidArgumentException, Token is null or empty';
+        console.log(err.message);
+        next(err);
     }
-    next(err);
-})
+});
 
 io.on(CONNECTION, (socket: ExtendedSocket) => {
+    //uuid of firebase user
     const uuid = socket.uuid;
 
-    // TODO: remove test code
-    // initial connection message
-    console.log('a user is connected ', socket.id);
-    // TODO: remove test code
-    // on connection, emit message
-    socket.emit('message', 'Hello from the server');
-    // TODO: remove test code
-    // on message recieved
-    socket.on('message', (msg: string) => {
-        console.log('message: ' + msg);
-    });
-
-    // join User room
     if (uuid) {
+        // join User room
         socket.join(uuid);
 
-        // TODO: remove test code
-        // sent user id to client
-        socket.emit('id', uuid);
-
         // on update
-        socket.on(UPDATE, (data: number) => {
+        socket.on(UPDATE, (data: ArrayBuffer) => {
             socket.broadcast.to(uuid).emit(UPDATE, data);
-            console.log('updating devices, counter = ', data);
         });
     }
 
@@ -75,15 +63,7 @@ io.on(CONNECTION, (socket: ExtendedSocket) => {
     socket.on(DISCONNECT, () => {
         console.log('user disconnected: ', socket.id);
     });
-
-    //on middleware error
-    socket.on(CONNECT_ERROR, (err) => {
-        console.log('Connection error: ', err);
-    });
 });
 
-http.listen(process.env.PORT, () => {
-    // TODO: remove test code
-    console.log('Server running at socketserverhi.herokuapp.com');
-});
+http.listen(process.env.PORT);
 

@@ -38,7 +38,7 @@ io.use((socket: UserSocket, next) => {
                 console.log('ID token was verified succesfully, ', socket.uuid);
                 next();
             }).catch((FirebaseError: admin.FirebaseError) => {
-                err.message += ` - User ID could not be verified: ${FirebaseError}`;
+                err.message += ` - Token could not be verified: ${FirebaseError}`;
                 console.error(err.message);
                 next(err);
             });

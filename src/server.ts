@@ -1,30 +1,34 @@
 import * as admin from "firebase-admin";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
-import { createAdapter, RedisAdapter } from "socket.io-redis";
+import { createAdapter } from "socket.io-redis";
 
-interface ExtendedSocket extends Socket {
+interface UserSocket extends Socket {
     uuid?: string;
 }
 
-const CONNECTION = 'connection';
-const DISCONNECT = 'disconnect';
-const UPDATE = 'update';
+enum Event {
+    CONNECTION = 'connection',
+    DISCONNECT = 'disconnect',
+    UPDATE = 'update',
+}
+
 
 const http = createServer();
 const io = new Server(http);
-const redisAdapter: RedisAdapter = createAdapter(process.env.REDIS_URL, { key: process.env.REDIS_KEY });
 
 admin.initializeApp({
     credential: admin.credential.cert({
+        // Private key is sanitized for Heroku deployment by replacing \\n characters with \n
         privateKey: process.env.PRIVATE_KEY.replace(/\\n/g, '\n'),
         projectId: process.env.PROJECT_ID,
         clientEmail: process.env.CLIENT_EMAIL,
     }),
 });
 
-io.adapter(redisAdapter);
-io.use((socket: ExtendedSocket, next) => {
+io.adapter(createAdapter(process.env.REDIS_URL, { key: process.env.REDIS_KEY }));
+
+io.use((socket: UserSocket, next) => {
     const token = socket.handshake.query['token'];
     const err = new Error('Authentication Failed');
     if (token) {
@@ -35,33 +39,33 @@ io.use((socket: ExtendedSocket, next) => {
                 next();
             }).catch((FirebaseError: admin.FirebaseError) => {
                 err.message += ` - User ID could not be verified: ${FirebaseError}`;
-                console.log(err.message);
+                console.error(err.message);
                 next(err);
             });
     } else {
         err.message += ' - InvalidArgumentException, Token is null or empty';
-        console.log(err.message);
+        console.error(err.message);
         next(err);
     }
 });
 
-io.on(CONNECTION, (socket: ExtendedSocket) => {
-    //uuid of firebase user
+io.on(Event.CONNECTION, (socket: UserSocket) => {
     const uuid = socket.uuid;
 
+    console.log(`<${socket.id}> has connected `, );
+
     if (uuid) {
-        // join User room
         socket.join(uuid);
 
-        // on update
-        socket.on(UPDATE, (data: ArrayBuffer) => {
-            socket.broadcast.to(uuid).emit(UPDATE, data);
+        socket.on(Event.UPDATE, (data: ArrayBuffer) => {
+            console.log(`updating <${socket.id}> group...`)
+            socket.broadcast.to(uuid).emit(Event.UPDATE, data);
         });
     }
 
-    //on disconnect
-    socket.on(DISCONNECT, () => {
+    socket.on(Event.DISCONNECT, () => {
         console.log('user disconnected: ', socket.id);
+        console.log(`<${socket.id}> has disconnected `, );
     });
 });
 

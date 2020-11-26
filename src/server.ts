@@ -1,4 +1,4 @@
-import * as admin from "firebase-admin";
+import { initializeApp, auth, FirebaseError, credential } from "firebase-admin";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import { createAdapter } from "socket.io-redis";
@@ -13,12 +13,11 @@ enum Event {
     UPDATE = 'update',
 }
 
-
 const http = createServer();
 const io = new Server(http);
 
-admin.initializeApp({
-    credential: admin.credential.cert({
+initializeApp({
+    credential: credential.cert({
         // Private key is sanitized for Heroku deployment by replacing \\n characters with \n
         privateKey: process.env.PRIVATE_KEY.replace(/\\n/g, '\n'),
         projectId: process.env.PROJECT_ID,
@@ -26,46 +25,47 @@ admin.initializeApp({
     }),
 });
 
-io.adapter(createAdapter(process.env.REDIS_URL, { key: process.env.REDIS_KEY }));
+if (process.env.REDIS_URL && process.env.REDIS_KEY) {
+    io.adapter(createAdapter(process.env.REDIS_URL, { key: process.env.REDIS_KEY }));
+    console.log('Redis support enabled');
+}
 
 io.use((socket: UserSocket, next) => {
     const token = socket.handshake.query['token'];
-    const err = new Error('Authentication Failed');
+    const error = new Error('Authentication Failed');
     if (token) {
-        admin.auth().verifyIdToken(token)
+        auth().verifyIdToken(token)
             .then((decodedToken) => {
                 socket.uuid = decodedToken.uid;
-                console.log('ID token was verified succesfully, ', socket.uuid);
+                console.log(`${socket.id} token was verified succesfully`);
                 next();
-            }).catch((FirebaseError: admin.FirebaseError) => {
-                err.message += ` - Token could not be verified: ${FirebaseError}`;
-                console.error(err.message);
-                next(err);
+            }).catch((FireBaseError: FirebaseError) => {
+                error.message += ` - Token could not be verified: ${FireBaseError}`;
+                console.error(error.message);
+                next(error);
             });
     } else {
-        err.message += ' - InvalidArgumentException, Token is null or empty';
-        console.error(err.message);
-        next(err);
+        error.message += ' - InvalidArgumentException, Token is null or empty';
+        console.error(error.message);
+        next(error);
     }
 });
 
 io.on(Event.CONNECTION, (socket: UserSocket) => {
     const uuid = socket.uuid;
 
-    console.log(`<${socket.id}> has connected `, );
+    console.log(`${socket.id} has connected`);
 
     if (uuid) {
         socket.join(uuid);
 
         socket.on(Event.UPDATE, (data: ArrayBuffer) => {
-            console.log(`updating <${socket.id}> group...`)
             socket.broadcast.to(uuid).emit(Event.UPDATE, data);
+            console.log(`${socket.id} group was updated`);
         });
     }
-
     socket.on(Event.DISCONNECT, () => {
-        console.log('user disconnected: ', socket.id);
-        console.log(`<${socket.id}> has disconnected `, );
+        console.log(`${socket.id} has disconnected`);
     });
 });
 

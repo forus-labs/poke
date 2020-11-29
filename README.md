@@ -9,5 +9,3 @@
 | Project Id | A user-assigned unique identifier for the firebase project, mainly used as a convenience alias to referece the firebase project. |
 | Client Email | firebase service account email. |
 | Redis URL | URL used to access the Redis instance. Required for redis support. |
-| Redis Key | The name of the key to pub/sub events on as prefix. (optional) |
-

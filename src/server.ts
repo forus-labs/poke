@@ -25,8 +25,8 @@ initializeApp({
     }),
 });
 
-if (process.env.REDIS_URL && process.env.REDIS_KEY) {
-    io.adapter(createAdapter(process.env.REDIS_URL, { key: process.env.REDIS_KEY }));
+if (process.env.REDIS_URL) {
+    io.adapter(createAdapter(process.env.REDIS_URL));
     console.log('Redis support enabled');
 }
 

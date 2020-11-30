@@ -7,10 +7,10 @@ interface UserSocket extends Socket {
     uuid?: string;
 }
 
-class AuthenticationFailed extends Error {
+class InvaidToken extends Error {
     constructor(message: string) {
         super(message);
-        this.name = 'AuthenticationFailed';
+        this.name = 'InvaidToken';
     }
 }
 
@@ -53,7 +53,7 @@ io.use((socket: UserSocket, next) => {
                 console.log(`Succesfully verified token for ${socket.id}`);
                 next();
             }).catch((e: FirebaseError) => {
-                const error = new AuthenticationFailed(`Token could not be verified: ${e}`);
+                const error = new InvaidToken(`Token could not be verified: ${e}`);
                 console.error(error.message);
                 next(error);
             });

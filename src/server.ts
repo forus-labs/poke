@@ -1,10 +1,24 @@
-import { initializeApp, auth, FirebaseError, credential } from "firebase-admin";
+import { auth, credential, FirebaseError, initializeApp } from "firebase-admin";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import { createAdapter } from "socket.io-redis";
 
 interface UserSocket extends Socket {
     uuid?: string;
+}
+
+class AuthenticationFailed extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'AuthenticationFailed';
+    }
+}
+
+class InvalidArgument extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'InvalidArgument';
+    }
 }
 
 enum Event {
@@ -27,25 +41,24 @@ initializeApp({
 
 if (process.env.REDIS_URL) {
     io.adapter(createAdapter(process.env.REDIS_URL));
-    console.log('Redis support enabled');
+    console.log('Enabled Redis');
 }
 
 io.use((socket: UserSocket, next) => {
     const token = socket.handshake.query['token'];
-    const error = new Error('Authentication Failed');
     if (token) {
         auth().verifyIdToken(token)
             .then((decodedToken) => {
                 socket.uuid = decodedToken.uid;
-                console.log(`${socket.id} token was verified succesfully`);
+                console.log(`Succesfully verified token for ${socket.id}`);
                 next();
-            }).catch((FireBaseError: FirebaseError) => {
-                error.message += ` - Token could not be verified: ${FireBaseError}`;
+            }).catch((e: FirebaseError) => {
+                const error = new AuthenticationFailed(`Token could not be verified: ${e}`);
                 console.error(error.message);
                 next(error);
             });
     } else {
-        error.message += ' - InvalidArgumentException, Token is null or empty';
+        const error = new InvalidArgument('Token is null or empty');
         console.error(error.message);
         next(error);
     }

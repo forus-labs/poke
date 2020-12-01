@@ -7,17 +7,17 @@ interface UserSocket extends Socket {
     uuid?: string;
 }
 
-class InvaidToken extends Error {
+class AuthenticationError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = 'InvaidToken';
+        this.name = 'AuthenticationError';
     }
 }
 
-class InvalidArgument extends Error {
+class InvalidArgumentError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = 'InvalidArgument';
+        this.name = 'InvalidArgumentError';
     }
 }
 
@@ -50,15 +50,15 @@ io.use((socket: UserSocket, next) => {
         auth().verifyIdToken(token)
             .then((decodedToken) => {
                 socket.uuid = decodedToken.uid;
-                console.log(`Succesfully verified token for ${socket.id}`);
+                console.log(`Succesfully verified token for ${socket.uuid}`);
                 next();
             }).catch((e: FirebaseError) => {
-                const error = new InvaidToken(`Token could not be verified: ${e}`);
+                const error = new AuthenticationError(`${socket.uuid}'s token could not be verified: ${e}`);
                 console.error(error.message);
                 next(error);
             });
     } else {
-        const error = new InvalidArgument('Token is null or empty');
+        const error = new InvalidArgumentError('Token is null or empty');
         console.error(error.message);
         next(error);
     }
@@ -66,19 +66,17 @@ io.use((socket: UserSocket, next) => {
 
 io.on(Event.CONNECTION, (socket: UserSocket) => {
     const uuid = socket.uuid;
-
-    console.log(`${socket.id} has connected`);
-
+    console.log(`${uuid} has connected`);
     if (uuid) {
         socket.join(uuid);
 
         socket.on(Event.UPDATE, (data: ArrayBuffer) => {
             socket.broadcast.to(uuid).emit(Event.UPDATE, data);
-            console.log(`${socket.id} group was updated`);
+            console.log(`${uuid} group was updated`);
         });
     }
     socket.on(Event.DISCONNECT, () => {
-        console.log(`${socket.id} has disconnected`);
+        console.log(`${uuid} has disconnected`);
     });
 });
 

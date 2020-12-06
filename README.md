@@ -4,7 +4,7 @@
 ### Environment variables
 All variables listed are required for deployment unless stated otherwise.
 
-| Environment | Description |
+| Environment variable  | Description |
 | ---- |-------------|
 | `PRIVATE_KEY` | A Firebase project's private key. |
 | `PROJECT_ID` | A Firebase project's ID. |

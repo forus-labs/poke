@@ -14,13 +14,6 @@ class AuthenticationError extends Error {
     }
 }
 
-class InvalidArgumentError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'InvalidArgumentError';
-    }
-}
-
 enum Event {
     CONNECTION = 'connection',
     DISCONNECT = 'disconnect',
@@ -58,7 +51,7 @@ io.use((socket: UserSocket, next) => {
                 next(error);
             });
     } else {
-        const error = new InvalidArgumentError('Token is null or empty');
+        const error = new AuthenticationError('Token is null or empty');
         console.error(error.message);
         next(error);
     }

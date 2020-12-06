@@ -1,24 +1,10 @@
-import { auth, credential, FirebaseError, initializeApp } from "firebase-admin";
+import { credential, initializeApp } from "firebase-admin";
 import { createServer } from "http";
-import { Server, Socket } from "socket.io";
+import { Server } from "socket.io";
 import { createAdapter } from "socket.io-redis";
 
-interface UserSocket extends Socket {
-    uuid?: string;
-}
+import { authenticate, connect, Event } from "./connection";
 
-class AuthenticationError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'AuthenticationError';
-    }
-}
-
-enum Event {
-    CONNECTION = 'connection',
-    DISCONNECT = 'disconnect',
-    UPDATE = 'update',
-}
 
 const http = createServer();
 const io = new Server(http);
@@ -37,41 +23,6 @@ if (process.env.REDIS_URL) {
     console.log('Enabled Redis');
 }
 
-io.use((socket: UserSocket, next) => {
-    const token = socket.handshake.query['token'];
-    if (token) {
-        auth().verifyIdToken(token)
-            .then((decodedToken) => {
-                socket.uuid = decodedToken.uid;
-                console.log(`Succesfully verified token for ${socket.uuid}`);
-                next();
-            }).catch((e: FirebaseError) => {
-                const error = new AuthenticationError(`${socket.uuid}'s token could not be verified: ${e}`);
-                console.error(error.message);
-                next(error);
-            });
-    } else {
-        const error = new AuthenticationError('Token is null or empty');
-        console.error(error.message);
-        next(error);
-    }
-});
-
-io.on(Event.CONNECTION, (socket: UserSocket) => {
-    const uuid = socket.uuid;
-    console.log(`${uuid} has connected`);
-    if (uuid) {
-        socket.join(uuid);
-
-        socket.on(Event.UPDATE, (data: ArrayBuffer) => {
-            socket.broadcast.to(uuid).emit(Event.UPDATE, data);
-            console.log(`${uuid} group was updated`);
-        });
-    }
-    socket.on(Event.DISCONNECT, () => {
-        console.log(`${uuid} has disconnected`);
-    });
-});
-
+io.use(authenticate);
+io.on(Event.CONNECTION, connect);
 http.listen(process.env.PORT);
-

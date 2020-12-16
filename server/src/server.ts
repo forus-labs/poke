@@ -5,10 +5,12 @@ import { createAdapter } from "socket.io-redis";
 
 import { authenticate, connect, Event } from "./connection";
 
-
+// Initialise server instance
 const http = createServer();
+// Initialise new Socket.io server
 const io = new Server(http);
 
+// Intialise Firebase-admin CLI
 initializeApp({
     credential: credential.cert({
         // Private key is sanitized for Heroku deployment by replacing \\n characters with \n
@@ -18,11 +20,16 @@ initializeApp({
     }),
 });
 
+// Adding redis support
 if (process.env.REDIS_URL) {
     io.adapter(createAdapter(process.env.REDIS_URL));
     console.log('Enabled Redis');
 }
 
+// Implment middleware for token verification
 //io.use(authenticate);
+
+// Listen to CONNECTION event
 io.on(Event.CONNECTION, connect);
+// Launch server
 http.listen(3000, '127.0.0.1');//process.env.PORT);

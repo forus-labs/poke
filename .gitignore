@@ -23,7 +23,7 @@ coverage
 .env
 
 # Dependency directory
-server/node_modules
+node_modules
 bower_components
 
 # Editors
@@ -41,4 +41,4 @@ server/dist/**/*
 yarn.lock
 
 # Heroku deployment file
-server/Procfile
+Procfile

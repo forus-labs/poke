@@ -26,12 +26,12 @@ tmp
 Thumbs.db
 
 # Heroku deployment file
-Procfile
+server/Procfile
 
 
 ## JAVASCRIPT / TYPESCRIPT
 # Ignore built ts files
-server/dist/**/*
+server/dist
 
 # Build
 public/css/main.css

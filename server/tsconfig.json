@@ -7,16 +7,16 @@
       "target": "es6",
       "moduleResolution": "node",
       "lib": ["ES6"],
-      "outDir": "server/dist",
+      "outDir": "dist",
       "baseUrl": ".",
       "paths": {
         "*": [
           "node_modules/*",
-          "server/src/types/*"
+          "src/types/*"
         ]
       }
     },
     "include": [
-      "server/src/**/*"
+      "src/**/*"
     ]
 }

@@ -1,3 +1,4 @@
+## GENERIC 
 lib-cov
 *.seed
 *.log
@@ -13,18 +14,8 @@ logs
 results
 tmp
 
-# Build
-public/css/main.css
-
-# Coverage reports
-coverage
-
 # API keys and secrets
 .env
-
-# Dependency directory
-node_modules
-bower_components
 
 # Editors
 .idea
@@ -34,11 +25,17 @@ bower_components
 .DS_Store
 Thumbs.db
 
+# Heroku deployment file
+Procfile
+
+
+## JAVASCRIPT / TYPESCRIPT
 # Ignore built ts files
 server/dist/**/*
 
-# ignore yarn.lock
-yarn.lock
+# Build
+public/css/main.css
 
-# Heroku deployment file
-Procfile
+# Dependency directory
+server/node_modules
+bower_components

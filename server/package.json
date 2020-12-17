@@ -3,7 +3,7 @@
     "version": "0.0.1",
     "private": true,
     "scripts": {
-        "serve": "node server/dist/server.js",
+        "serve": "node dist/server.js",
         "start": "npm run serve",
         "build": "tsc",
         "postinstall": "npm run build",

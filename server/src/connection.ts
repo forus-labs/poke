@@ -1,19 +1,20 @@
 import { auth, FirebaseError } from "firebase-admin";
 import { Socket } from "socket.io";
 
-// Socket connection events being listened to
+// Represents a Socket.io event.
 enum Event {
     CONNECTION = 'connection',
     DISCONNECT = 'disconnect',
     UPDATE = 'update',
 }
 
-// A socket with uuid as parameter
+// Represents a user socket.
 interface UserSocket extends Socket {
+    // A user's uuid.
     uuid?: string;
 }
 
-// A general authentication error type
+// Represents an authentication error.
 class AuthenticationError extends Error {
     constructor(message: string) {
         super(message);
@@ -21,52 +22,46 @@ class AuthenticationError extends Error {
     }
 }
 
-
-// Facilitates Socket client connection to the Server
+// Connects all clients with the same uuid to a room and listens for updates from other clients.
 function connect(socket: UserSocket): void {
     const uuid = socket.uuid;
     console.log(`${uuid} has connected`);
     if (uuid) {
-        // Joins user to its room according to uuid
+        // test if socket.join is called with uuid
         socket.join(uuid);
-        // Listens to UPDATE event
         socket.on(Event.UPDATE, (data: ArrayBuffer) => {
-            // Broadcasts Protobuf files to all sockets in the room
+            // test if socket.broadcast.to is called with uuid
             socket.broadcast.to(uuid).emit(Event.UPDATE, data);
             console.log(`${uuid} group was updated`);
         });
     }
-    // Listens to DISCONNECT event
     socket.on(Event.DISCONNECT, () => {
         console.log(`${uuid} has disconnected`);
     });
 }
-
-
-// Autheticates client via its token
-function authenticate(socket: UserSocket, next: (err?: Error) => void): void {
-    // Token provided by client
+// Autheticates a client using its token.
+function authenticate(socket: UserSocket, next: (err?: Error) => void, _auth: unknown): void {
     const token = socket.handshake.query['token'];
     if (token) {
-        // Verifies authenticity of the ID token with firebase-auth 
-        auth().verifyIdToken(token)
+        const auth = _auth as auth.Auth
+        auth.verifyIdToken(token)
             .then((decodedToken) => {
-                // Populate uuid parameter in socket
+                // test for parameter set, uuid is changed correctly
                 socket.uuid = decodedToken.uid;
                 console.log(`Succesfully verified token for ${socket.uuid}`);
+                // check next() is called without parameters
                 next();
             }).catch((e: FirebaseError) => {
-                // Throws error if verification has failed
                 const error = new AuthenticationError(`${socket.uuid}'s token could not be verified: ${e}`);
                 console.error(error.message);
+                // check next() returns error arguments with expected msg
                 next(error);
             });
     } else {
-        // Throws error if Token was null or empty
         const error = new AuthenticationError('Token is null or empty');
         console.error(error.message);
         next(error);
     }
 }
 
-export { authenticate, connect, Event }
+export { authenticate, connect, Event, UserSocket, AuthenticationError }

@@ -1,67 +1,63 @@
-import { auth, credential, initializeApp } from "firebase-admin";
-import SocketMock from "socket.io-mock";
+import { auth } from "firebase-admin";
+import { instance, mock, reset, verify, when } from 'ts-mockito';
 
 import { authenticate, connect, UserSocket, AuthenticationError } from "../src/connection";
 
 
-const authMock = jest.fn((token: string, succeed: boolean) => {
-    return {
-        verifyIdToken: jest.fn(() => {
-            if (succeed) {
-                Promise.resolve(token)
-            } else {
-                if (token) {
-                    Promise.reject('token could not be verified: ')
-                }
-                else {
-                    Promise.reject('Token is null or empty')
-                }
+// Mocked Socket
+const mockedSocket = mock<UserSocket>();
+function mockedHandshake(tokenId: string) {
+    return { auth: { token: tokenId }, query: undefined, address: undefined, headers: undefined, issued: undefined, secure: undefined, time: undefined, url: undefined, xdomain: undefined };
+}
 
-            }
-        })
-    };
-});
+// Mocked Auth
+const mockedAuth = mock<auth.Auth>();
+const mockedDecodedToken = { uid: 'suKSRWjRyzbZAEMTY4i0mi1jan83', aud: '', exp: 3600, auth_time: undefined, firebase: undefined, iat: undefined, iss: undefined, sub: undefined };
+when(mockedAuth.verifyIdToken('suKSRWjRyzbZAEMTY4i0mi1jan83')).thenResolve(mockedDecodedToken);
+when(mockedAuth.verifyIdToken('Invalid')).thenReject(new Error('Token is not valid'));
 
 
 describe('Authenticate', () => {
+    beforeEach(() => {
+        reset(mockedSocket);
+    });
     test('is successful', () => {
-        const mSocket: UserSocket = new SocketMock();
+        when(mockedSocket.handshake).thenReturn(mockedHandshake('suKSRWjRyzbZAEMTY4i0mi1jan83'));
+        const mSocket = instance(mockedSocket);
+        const mAuth = instance(mockedAuth);
         const mNext = jest.fn();
-        const mAuth = authMock('suKSRWjRyzbZAEMTY4i0mi1jan83', true);
         authenticate(mSocket, mNext, mAuth);
 
         // test if uuid is set correctly
+        // How do I create a setter for uuid
         expect(mSocket.uuid).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
-        // check next() is called without parameters
-        expect(mNext).toBeCalledWith();
 
-        //     mSocket.handshake.query['token'] = 'invalidToken';
-        // auth().createCustomToken('suKSRWjRyzbZAEMTY4i0mi1jan83').then((customToken) => {
-        //     mSocket.handshake.query['token'] = customToken;
-        // });
+        // check next() is called without parameters
+        // mNext is not called at all
+        expect(mNext).toBeCalledWith();
     });
     test('failed from invalid token', () => {
-        const mSocket: UserSocket = new SocketMock();
+        when(mockedSocket.handshake).thenReturn(mockedHandshake('Invalid'));
+        const mSocket = instance(mockedSocket);
+        const mAuth = instance(mockedAuth);
         const mNext = jest.fn();
-        const mAuth = authMock('123', false);
         authenticate(mSocket, mNext, mAuth);
 
         // check next() returns error arguments with expected msg
-        expect(mNext).toBeCalledWith(expect.objectContaining({
-            message: expect.stringContaining('token could not be verified: ')
-        }))
+        // mNext is not called at all
+        expect(mNext).toHaveBeenCalledWith(new AuthenticationError('FirebaseError: Token does not exist'));
+        //expect(mNext.mock.calls[0][0]).toBe(expect.stringContaining('Token could not be verified: '));
     });
 
     test('failed from empty token', () => {
-        const mSocket: UserSocket = new SocketMock();
+        when(mockedSocket.handshake).thenReturn(mockedHandshake(''));
+        const mSocket = instance(mockedSocket);
+        const mAuth = instance(mockedAuth);
         const mNext = jest.fn();
-        const mAuth = authMock('', false);
         authenticate(mSocket, mNext, mAuth);
 
         // check next() returns error arguments with expected msg
-        expect(mNext).toBeCalledWith(expect.objectContaining({
-            message: expect.stringContaining('Token is null or empty')
-        }))
+        expect(mNext).lastCalledWith(new AuthenticationError('Token is null or empty'));
     });
 });
 

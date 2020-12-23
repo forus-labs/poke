@@ -40,27 +40,25 @@ function connect(socket: UserSocket): void {
     });
 }
 // Autheticates a client using its token.
-function authenticate(socket: UserSocket, next: (err?: Error) => void, _auth: unknown): void {
-    const token = socket.handshake.query['token'];
+function authenticate(socket: UserSocket, next: (err?: Error) => void, auth: auth.Auth): void {
+    const token = socket.handshake.auth['token'];
     if (token) {
-        const auth = _auth as auth.Auth
-        auth.verifyIdToken(token)
-            .then((decodedToken) => {
-                // test for parameter set, uuid is changed correctly
-                socket.uuid = decodedToken.uid;
-                console.log(`Succesfully verified token for ${socket.uuid}`);
-                // check next() is called without parameters
-                next();
-            }).catch((e: FirebaseError) => {
-                const error = new AuthenticationError(`${socket.uuid}'s token could not be verified: ${e}`);
-                console.error(error.message);
-                // check next() returns error arguments with expected msg
-                next(error);
-            });
+        auth.verifyIdToken(token).then((decodedToken) => {
+            // test for parameter set, uuid is changed correctly
+            socket.uuid = decodedToken.uid;
+            console.log(`Succesfully verified token for ${socket.uuid}`);
+            // next() is not called if there are no subsequent middlewares added
+            return next();
+        }).catch((e: FirebaseError) => {
+            const error = new AuthenticationError(`Firebase${e}`);
+            console.error(error.message);
+            // check next() returns error arguments with expected msg
+            return next(error);
+        });
     } else {
         const error = new AuthenticationError('Token is null or empty');
         console.error(error.message);
-        next(error);
+        return next(error);
     }
 }
 

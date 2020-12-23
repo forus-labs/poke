@@ -26,7 +26,7 @@ if (process.env.REDIS_URL) {
 }
 
 // Verifies firebase tokens
-//io.use((socket, next) => authenticate(socket, next, auth()));
+// io.use((socket, next) => authenticate(socket, next, auth()));
 
 // Binds connect to conneciton events.
 io.on(Event.CONNECTION, connect);

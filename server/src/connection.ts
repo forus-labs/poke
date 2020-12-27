@@ -27,10 +27,8 @@ function connect(socket: UserSocket): void {
     const uuid = socket.uuid;
     console.log(`${uuid} has connected`);
     if (uuid) {
-        // test if socket.join is called with uuid
         socket.join(uuid);
         socket.on(Event.UPDATE, (data: ArrayBuffer) => {
-            // test if socket.to is called with uuid
             socket.to(uuid).emit(Event.UPDATE, data);
             console.log(`${uuid} group was updated`);
         });

@@ -1,5 +1,5 @@
 import { auth } from "firebase-admin";
-import { anyFunction, anyString, capture, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anyString, capture, instance, mock, reset, when } from 'ts-mockito';
 
 import { authenticate, connect, UserSocket, AuthenticationError } from "../src/connection";
 
@@ -25,7 +25,6 @@ describe('Authenticate', () => {
         when(mockedSocket.handshake).thenReturn(mockedHandshake('suKSRWjRyzbZAEMTY4i0mi1jan83'));
         const mSocket = instance(mockedSocket);
         const mAuth = instance(mockedAuth);
-
         function mNext(data) {
             try {
                 // test if uuid is set correctly
@@ -85,12 +84,10 @@ describe('Connect', () => {
         when(mockedSocket.to(anyString())).thenReturn(mockedSocket);
         const mSocket = instance(mockedSocket);
         connect(mSocket);
-
-        // "TypeError: method is not a function" because broadcast is a property?
         const [arg1, lambda] = capture(mockedSocket.on).first();
         lambda();
-
         const [arg2] = capture(mockedSocket.to).last();
+        // test if socket.to is called with uuid
         expect(arg2).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
     });
 });

@@ -1,5 +1,5 @@
 import { auth } from "firebase-admin";
-import { instance, mock, reset, verify, when } from 'ts-mockito';
+import { anyFunction, anyString, capture, instance, mock, reset, verify, when } from 'ts-mockito';
 
 import { authenticate, connect, UserSocket, AuthenticationError } from "../src/connection";
 
@@ -21,32 +21,38 @@ describe('Authenticate', () => {
     beforeEach(() => {
         reset(mockedSocket);
     });
-    test('is successful', () => {
+    test('is successful', done => {
         when(mockedSocket.handshake).thenReturn(mockedHandshake('suKSRWjRyzbZAEMTY4i0mi1jan83'));
         const mSocket = instance(mockedSocket);
         const mAuth = instance(mockedAuth);
-        const mNext = jest.fn();
+
+        function mNext(data) {
+            try {
+                // test if uuid is set correctly
+                expect(mSocket.uuid).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
+                // check next() is called without parameters
+                expect(data).toBe(undefined);
+                done();
+            } catch (error) {
+                done(error)
+            }
+        }
         authenticate(mSocket, mNext, mAuth);
-
-        // test if uuid is set correctly
-        // How do I create a setter for uuid
-        expect(mSocket.uuid).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
-
-        // check next() is called without parameters
-        // mNext is not called at all
-        expect(mNext).toBeCalledWith();
     });
-    test('failed from invalid token', () => {
+    test('failed from invalid token', done => {
         when(mockedSocket.handshake).thenReturn(mockedHandshake('Invalid'));
         const mSocket = instance(mockedSocket);
         const mAuth = instance(mockedAuth);
-        const mNext = jest.fn();
+        function mNext(data) {
+            try {
+                // check next() returns error arguments with expected msg
+                expect(data).toStrictEqual(new AuthenticationError('FirebaseError: Token is not valid'));
+                done();
+            } catch (error) {
+                done(error)
+            }
+        }
         authenticate(mSocket, mNext, mAuth);
-
-        // check next() returns error arguments with expected msg
-        // mNext is not called at all
-        expect(mNext).toHaveBeenCalledWith(new AuthenticationError('FirebaseError: Token does not exist'));
-        //expect(mNext.mock.calls[0][0]).toBe(expect.stringContaining('Token could not be verified: '));
     });
 
     test('failed from empty token', () => {
@@ -55,18 +61,33 @@ describe('Authenticate', () => {
         const mAuth = instance(mockedAuth);
         const mNext = jest.fn();
         authenticate(mSocket, mNext, mAuth);
-
         // check next() returns error arguments with expected msg
         expect(mNext).lastCalledWith(new AuthenticationError('Token is null or empty'));
     });
 });
 
 
-// test if socket.join is called with uuid
-// test if socket.broadcast.to is called with uuid
-// test('Testing Connect', () => {
+describe('Connect', () => {
+    beforeEach(() => {
+        reset(mockedSocket);
+    });
+    test('joined room with uuid', () => {
+        when(mockedSocket.uuid).thenReturn('suKSRWjRyzbZAEMTY4i0mi1jan83');
+        const mSocket = instance(mockedSocket);
+        connect(mSocket);
+        const arg = capture(mockedSocket.join).last();
+        // test if socket.join is called with uuid
+        expect(arg).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
+    });
 
-//     // mock the socket object
-//     // mock the next callback
+    test('broadcasted with uuid', () => {
+        when(mockedSocket.uuid).thenReturn('suKSRWjRyzbZAEMTY4i0mi1jan83');
+        const mSocket = instance(mockedSocket);
+        connect(mSocket);
 
-// });
+        // "TypeError: method is not a function" because broadcast is a property?
+        const arg = capture(mockedSocket.broadcast.to).last();
+        // test if socket.broadcast.to is called with uuid
+        expect(arg).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
+    });
+});

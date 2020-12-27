@@ -44,15 +44,12 @@ function authenticate(socket: UserSocket, next: (err?: Error) => void, auth: aut
     const token = socket.handshake.auth['token'];
     if (token) {
         auth.verifyIdToken(token).then((decodedToken) => {
-            // test for parameter set, uuid is changed correctly
             socket.uuid = decodedToken.uid;
             console.log(`Succesfully verified token for ${socket.uuid}`);
-            // next() is not called if there are no subsequent middlewares added
             return next();
         }).catch((e: FirebaseError) => {
             const error = new AuthenticationError(`Firebase${e}`);
             console.error(error.message);
-            // check next() returns error arguments with expected msg
             return next(error);
         });
     } else {

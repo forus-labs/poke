@@ -75,19 +75,23 @@ describe('Connect', () => {
         when(mockedSocket.uuid).thenReturn('suKSRWjRyzbZAEMTY4i0mi1jan83');
         const mSocket = instance(mockedSocket);
         connect(mSocket);
-        const arg = capture(mockedSocket.join).last();
+        const [arg] = capture(mockedSocket.join).last();
         // test if socket.join is called with uuid
         expect(arg).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
     });
 
     test('broadcasted with uuid', () => {
         when(mockedSocket.uuid).thenReturn('suKSRWjRyzbZAEMTY4i0mi1jan83');
+        when(mockedSocket.broadcast).thenReturn(mockedSocket);
         const mSocket = instance(mockedSocket);
         connect(mSocket);
 
         // "TypeError: method is not a function" because broadcast is a property?
-        const arg = capture(mockedSocket.broadcast.to).last();
-        // test if socket.broadcast.to is called with uuid
-        expect(arg).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
+        const [arg1, lambda] = capture(mockedSocket.on).first();
+        lambda();
+
+        //const [arg2] = capture(mockedSocket.broadcast.to).last();
+        verify(mSocket.broadcast.to('suKSRWjRyzbZAEMTY4i0mi1jan83')).once();
+        //expect(arg2).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
     });
 });

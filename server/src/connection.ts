@@ -31,7 +31,7 @@ function connect(socket: UserSocket): void {
         socket.join(uuid);
         socket.on(Event.UPDATE, (data: ArrayBuffer) => {
             // test if socket.broadcast.to is called with uuid
-            socket.broadcast.to(uuid).emit(Event.UPDATE, data);
+            socket.to(uuid).emit(Event.UPDATE, data);
             console.log(`${uuid} group was updated`);
         });
     }

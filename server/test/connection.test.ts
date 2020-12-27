@@ -82,7 +82,7 @@ describe('Connect', () => {
 
     test('broadcasted with uuid', () => {
         when(mockedSocket.uuid).thenReturn('suKSRWjRyzbZAEMTY4i0mi1jan83');
-        when(mockedSocket.broadcast).thenReturn(mockedSocket);
+        when(mockedSocket.to(anyString())).thenReturn(mockedSocket);
         const mSocket = instance(mockedSocket);
         connect(mSocket);
 
@@ -90,8 +90,7 @@ describe('Connect', () => {
         const [arg1, lambda] = capture(mockedSocket.on).first();
         lambda();
 
-        //const [arg2] = capture(mockedSocket.broadcast.to).last();
-        verify(mSocket.broadcast.to('suKSRWjRyzbZAEMTY4i0mi1jan83')).once();
-        //expect(arg2).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
+        const [arg2] = capture(mockedSocket.to).last();
+        expect(arg2).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
     });
 });

@@ -1,6 +1,8 @@
 import { auth, FirebaseError } from "firebase-admin";
 import { Socket } from "socket.io";
 
+export { authenticate, connect, Event, UserSocket, AuthenticationError }
+
 // Represents a Socket.io event.
 enum Event {
     CONNECTION = 'connection',
@@ -28,15 +30,16 @@ function connect(socket: UserSocket): void {
     console.log(`${uuid} has connected`);
     if (uuid) {
         socket.join(uuid);
-        socket.on(Event.UPDATE, (data: ArrayBuffer) => {
+        socket.on(Event.UPDATE, (data) => {
             socket.to(uuid).emit(Event.UPDATE, data);
-            console.log(`${uuid} group was updated`);
+            console.log(`${uuid} room was updated`);
         });
     }
     socket.on(Event.DISCONNECT, () => {
         console.log(`${uuid} has disconnected`);
     });
 }
+
 // Autheticates a client using its token.
 function authenticate(socket: UserSocket, next: (err?: Error) => void, auth: auth.Auth): void {
     const token = socket.handshake.auth['token'];
@@ -56,5 +59,3 @@ function authenticate(socket: UserSocket, next: (err?: Error) => void, auth: aut
         return next(error);
     }
 }
-
-export { authenticate, connect, Event, UserSocket, AuthenticationError }

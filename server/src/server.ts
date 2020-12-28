@@ -30,5 +30,6 @@ io.use((socket, next) => authenticate(socket, next, auth()));
 
 // Binds connect to conneciton events.
 io.on(Event.CONNECTION, connect);
+
 // Launch http server that listens to port number specified environment variables.
 http.listen(process.env.PORT);

@@ -1,7 +1,6 @@
 import { auth, FirebaseError } from "firebase-admin";
 import { Socket } from "socket.io";
 
-export { authenticate, connect, Event, UserSocket, AuthenticationError }
 
 // Represents a Socket.io event.
 enum Event {
@@ -59,3 +58,5 @@ function authenticate(socket: UserSocket, next: (err?: Error) => void, auth: aut
         return next(error);
     }
 }
+
+export { authenticate, connect, Event, UserSocket, AuthenticationError }

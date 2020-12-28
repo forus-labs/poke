@@ -5,6 +5,7 @@ import { createAdapter } from "socket.io-redis";
 
 import { authenticate, connect, Event } from "./connection";
 
+
 // A http server.
 const http = createServer();
 // A socket.io server.

@@ -26,14 +26,14 @@ export class AuthenticationError extends Error {
 // Connects all clients with the same uuid to a room and listens for updates from other clients.
 export function connect(socket: UserSocket): void {
     const uuid = socket.uuid;
-    console.log(`${uuid} has connected`);
+    console.log(`${uuid}<${socket.id}> has connected`);
     socket.join(uuid);
     socket.on(Event.UPDATE, (data) => {
         socket.to(uuid).emit(Event.UPDATE, data);
-        console.log(`${uuid} room was updated`);
+        console.log(`${uuid}<${socket.id}> room was updated`);
     });
     socket.on(Event.DISCONNECT, () => {
-        console.log(`${uuid} has disconnected`);
+        console.log(`${uuid}<${socket.id}> has disconnected`);
     });
 }
 
@@ -43,7 +43,7 @@ export function authenticate(socket: UserSocket, next: (err?: Error) => void, au
     if (token) {
         auth.verifyIdToken(token).then((decodedToken) => {
             socket.uuid = decodedToken.uid;
-            console.log(`Succesfully verified token for ${socket.uuid}`);
+            console.log(`Succesfully verified token for ${socket.uuid}<${socket.id}>`);
             return next();
         }).catch((e: FirebaseError) => {
             // E.g. FirebaseError: Token was invalid

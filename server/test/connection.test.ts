@@ -5,6 +5,7 @@ import { authenticate, connect, UserSocket, AuthenticationError } from "../src/c
 
 
 const mockedSocket = mock<UserSocket>();
+when(mockedSocket.id).thenReturn('sampleSocketId');
 function handshake(tokenId: string) {
     return { auth: { token: tokenId }, query: undefined, address: undefined, headers: undefined, issued: undefined, secure: undefined, time: undefined, url: undefined, xdomain: undefined };
 }
@@ -26,7 +27,7 @@ describe('authenticate', () => {
                 expect(data).toBe(undefined);
                 done();
             } catch (error) {
-                done(error)
+                done(error);
             }
         }
         authenticate(socket, next, auth);
@@ -41,7 +42,7 @@ describe('authenticate', () => {
                 expect(data).toStrictEqual(new AuthenticationError('FirebaseError: Token is not valid'));
                 done();
             } catch (error) {
-                done(error)
+                done(error);
             }
         }
         authenticate(socket, next, auth);

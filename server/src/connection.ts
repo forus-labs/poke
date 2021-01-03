@@ -26,14 +26,14 @@ export class AuthenticationError extends Error {
 // Connects all clients with the same uuid to a room and listens for updates from other clients.
 export function connect(socket: UserSocket): void {
     const uuid = socket.uuid;
-    console.log(`${uuid}<${socket.id}> has connected`);
+    console.log(`${uuid} <${socket.id}> has connected`);
     socket.join(uuid);
     socket.on(Event.UPDATE, (data) => {
         socket.to(uuid).emit(Event.UPDATE, data);
-        console.log(`${uuid}<${socket.id}> room was updated`);
+        console.log(`${uuid} <${socket.id}> room is updated`);
     });
     socket.on(Event.DISCONNECT, () => {
-        console.log(`${uuid}<${socket.id}> has disconnected`);
+        console.log(`${uuid} <${socket.id}> has disconnected`);
     });
 }
 

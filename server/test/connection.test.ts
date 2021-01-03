@@ -73,8 +73,8 @@ describe('connect', () => {
         when(mockedSocket.to(anyString())).thenReturn(mockedSocket);
         const socket = instance(mockedSocket);
         connect(socket);
-        const [event, lambda] = capture(mockedSocket.on).first();
-        lambda();
+        const [event, callback] = capture(mockedSocket.on).first();
+        callback();
         const [uuid] = capture(mockedSocket.to).last();
         expect(uuid).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
     });

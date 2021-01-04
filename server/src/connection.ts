@@ -17,6 +17,7 @@ export interface UserSocket extends Socket {
 
 // Represents an authentication error.
 export class AuthenticationError extends Error {
+    // Creates an error with the name perameter
     constructor(message: string) {
         super(message);
         this.name = 'AuthenticationError';
@@ -43,9 +44,11 @@ export function authenticate(socket: UserSocket, next: (err?: Error) => void, au
     if (token) {
         auth.verifyIdToken(token).then((decodedToken) => {
             socket.uuid = decodedToken.uid;
-            console.log(`Succesfully verified token for ${socket.uuid}<${socket.id}>`);
+            console.log(`Succesfully verified token for ${socket.uuid} <${socket.id}>`);
             return next();
         }).catch((e: FirebaseError) => {
+            // FirebaseError is a subclass of the standard Error object. 
+            // We prefix it here with "Firebase" to differentiate it.
             // E.g. FirebaseError: Token was invalid
             const error = new AuthenticationError(`Firebase${e}`);
             console.error(error.message);

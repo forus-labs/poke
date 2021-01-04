@@ -3,27 +3,27 @@ import { anyString, capture, instance, mock, when } from 'ts-mockito';
 
 import { authenticate, connect, UserSocket, AuthenticationError } from "../src/connection";
 
-
-const mockedSocket = mock<UserSocket>();
-when(mockedSocket.id).thenReturn('sampleSocketId');
+const uid = 'suKSRWjRyzbZAEMTY4i0mi1jan83';
+const mockSocket = mock<UserSocket>();
+when(mockSocket.id).thenReturn('sampleSocketId');
 function handshake(tokenId: string) {
     return { auth: { token: tokenId }, query: undefined, address: undefined, headers: undefined, issued: undefined, secure: undefined, time: undefined, url: undefined, xdomain: undefined };
 }
 
-const mockedAuth = mock<auth.Auth>();
-const decodedToken = { uid: 'suKSRWjRyzbZAEMTY4i0mi1jan83', aud: '', exp: 3600, auth_time: undefined, firebase: undefined, iat: undefined, iss: undefined, sub: undefined };
-when(mockedAuth.verifyIdToken('suKSRWjRyzbZAEMTY4i0mi1jan83')).thenResolve(decodedToken);
-when(mockedAuth.verifyIdToken('Invalid')).thenReject(new Error('Token is not valid'));
+const mockAuth = mock<auth.Auth>();
+const decodedToken = { uid: uid, aud: '', exp: 3600, auth_time: undefined, firebase: undefined, iat: undefined, iss: undefined, sub: undefined };
+when(mockAuth.verifyIdToken(uid)).thenResolve(decodedToken);
+when(mockAuth.verifyIdToken('Invalid')).thenReject(new Error('Token is not valid'));
 
 
 describe('authenticate', () => {
     test('is successful', done => {
-        when(mockedSocket.handshake).thenReturn(handshake('suKSRWjRyzbZAEMTY4i0mi1jan83'));
-        const socket = instance(mockedSocket);
-        const auth = instance(mockedAuth);
+        when(mockSocket.handshake).thenReturn(handshake(uid));
+        const socket = instance(mockSocket);
+        const auth = instance(mockAuth);
         function next(data) {
             try {
-                expect(socket.uuid).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
+                expect(socket.uuid).toBe(uid);
                 expect(data).toBe(undefined);
                 done();
             } catch (error) {
@@ -34,9 +34,9 @@ describe('authenticate', () => {
     });
 
     test('fails from invalid token', done => {
-        when(mockedSocket.handshake).thenReturn(handshake('Invalid'));
-        const socket = instance(mockedSocket);
-        const auth = instance(mockedAuth);
+        when(mockSocket.handshake).thenReturn(handshake('Invalid'));
+        const socket = instance(mockSocket);
+        const auth = instance(mockAuth);
         function next(data) {
             try {
                 expect(data).toStrictEqual(new AuthenticationError('FirebaseError: Token is not valid'));
@@ -49,9 +49,9 @@ describe('authenticate', () => {
     });
 
     test('fails from empty token', () => {
-        when(mockedSocket.handshake).thenReturn(handshake(''));
-        const socket = instance(mockedSocket);
-        const auth = instance(mockedAuth);
+        when(mockSocket.handshake).thenReturn(handshake(''));
+        const socket = instance(mockSocket);
+        const auth = instance(mockAuth);
         const next = jest.fn();
         authenticate(socket, next, auth);
         expect(next).lastCalledWith(new AuthenticationError('Token is null or empty'));
@@ -61,21 +61,21 @@ describe('authenticate', () => {
 
 describe('connect', () => {
     test('joins room with valid uuid', () => {
-        when(mockedSocket.uuid).thenReturn('suKSRWjRyzbZAEMTY4i0mi1jan83');
-        const socket = instance(mockedSocket);
+        when(mockSocket.uuid).thenReturn(uid);
+        const socket = instance(mockSocket);
         connect(socket);
-        const [uuid] = capture(mockedSocket.join).last();
-        expect(uuid).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
+        const [uuid] = capture(mockSocket.join).last();
+        expect(uuid).toBe(uid);
     });
 
     test('broadcasts with valid uuid', () => {
-        when(mockedSocket.uuid).thenReturn('suKSRWjRyzbZAEMTY4i0mi1jan83');
-        when(mockedSocket.to(anyString())).thenReturn(mockedSocket);
-        const socket = instance(mockedSocket);
+        when(mockSocket.uuid).thenReturn(uid);
+        when(mockSocket.to(anyString())).thenReturn(mockSocket);
+        const socket = instance(mockSocket);
         connect(socket);
-        const [event, callback] = capture(mockedSocket.on).first();
+        const [event, callback] = capture(mockSocket.on).first();
         callback();
-        const [uuid] = capture(mockedSocket.to).last();
-        expect(uuid).toBe('suKSRWjRyzbZAEMTY4i0mi1jan83');
+        const [uuid] = capture(mockSocket.to).last();
+        expect(uuid).toBe(uid);
     });
 });

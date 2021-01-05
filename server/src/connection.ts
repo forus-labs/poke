@@ -17,7 +17,7 @@ export interface UserSocket extends Socket {
 
 // Represents an authentication error.
 export class AuthenticationError extends Error {
-    // Creates an error with the name perameter
+    // Creates an error with the name perameter.
     constructor(message: string) {
         super(message);
         this.name = 'AuthenticationError';
@@ -31,7 +31,7 @@ export function connect(socket: UserSocket): void {
     socket.join(uuid);
     socket.on(Event.UPDATE, (data) => {
         socket.to(uuid).emit(Event.UPDATE, data);
-        console.log(`${uuid} <${socket.id}> room is updated`);
+        console.log(`${uuid} <${socket.id}> has updated the room`);
     });
     socket.on(Event.DISCONNECT, () => {
         console.log(`${uuid} <${socket.id}> has disconnected`);

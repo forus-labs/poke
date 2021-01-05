@@ -47,9 +47,9 @@ export function authenticate(socket: UserSocket, next: (err?: Error) => void, au
             console.log(`Succesfully verified token for ${socket.uuid} <${socket.id}>`);
             return next();
         }).catch((e: FirebaseError) => {
-            // FirebaseError is a subclass of the standard Error object. 
-            // We prefix it here with "Firebase" to differentiate it.
-            // E.g. FirebaseError: Token was invalid
+            // Since ${e} returns “Error: <message>”, 
+            // we prefix it with Firebase so that the message will look like 
+            // E.g. FirebaseError: <message>
             const error = new AuthenticationError(`Firebase${e}`);
             console.error(error.message);
             return next(error);

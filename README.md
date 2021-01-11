@@ -3,6 +3,7 @@ ___
 ## Server
 
 **Environment variables**
+
 All variables listed are required for server deployment unless stated otherwise.
 
 | Environment variable  | Description |

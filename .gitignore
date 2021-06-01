@@ -25,17 +25,14 @@ tmp
 .DS_Store
 Thumbs.db
 
-# Heroku deployment file
-server/Procfile
-
-
 ## JAVASCRIPT / TYPESCRIPT
 # Ignore built ts files
 server/dist
+client/dist
 
 # Build
 public/css/main.css
 
 # Dependency directory
 server/node_modules
-bower_components
+client/node_modules
